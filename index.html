@@ -19,10 +19,12 @@
   <!-- todo list -->
   <ul>
     <li v-for="todo in todos" :key="todo.index">
-      <span :class="{completed:todo.completed}">{{todo.title}}</span>
+      <span :class="{completed:todo.completed}"
+            @dblclick="editTodo(todo)">{{todo.title}}</span>
       <input type="button" value="标为完成"@click="markAsCompleted(todo)">
       <input type="button" value="删除" @click="removeTodo">
-      <input type="text" value="编辑 todo..."/>
+      <input type="text" value="编辑 todo..."
+             v-if="editedTodo!=null"/>
     </li>
    
   </ul>
@@ -46,7 +48,8 @@
         data: function () {
             return {
                 todos:[],
-                newTodoTitle:'',           
+                newTodoTitle:'', 
+                editedTodo:null,//temperarily store todo before it is edited
                 
                 
             }
@@ -57,9 +60,7 @@
               if(this.newTodoTitle.length){
                 this.todos.push({title:this.newTodoTitle,completed:false});
               this.newTodoTitle='' 
-                 }
-            
-              
+                 }         
               
           },
             markAsCompleted:function(todo){
@@ -68,6 +69,9 @@
             removeTodo: function(todo){
                 
                 this.todos.splice(this.todos.indexOf(todo),1)
+            },
+            editTodo: function(todo){
+                this.editedTodo={title:todo.title}
             }
             
         
