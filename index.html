@@ -46,12 +46,28 @@
 
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <script>
+         //storage begin
+        var STORAGE_KEY = 'vue2.x-todo-tutorial';
+        var todoStorage = {
+            fetch:function(){
+                var todos = JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+                todos.forEach(function(todo,index){
+                    todo.id=index
+                });
+                todoStorage.uid = todos.length;
+                return todos
+            },
+            save: function(todos){
+                localStorage.setItem(STORAGE_KEY,JSON.stringify(todos))
+            }
+        }
+        //storage finish
         let id = 0;
         var app = new Vue({
             el: '#todo-app',
             data: function() {
                 return {
-                    todos: [],
+                    todos: todoStorage.fetch(),
                     newTodoTitle: '',
                     editedTodo: null, //temperarily store todo before it is edited
                     intention: 'all',
@@ -60,12 +76,20 @@
 
                 }
             },
-
+            //listening the chanages of todo list and store the state in locaal storage
+            watch:{
+                todos:{
+                    handler:function(todos){
+                        todoStorage.save(todos)
+                    },
+                    deep:true
+                }
+            },
             methods: {
                 addTodo: function() {
                     if (this.newTodoTitle.length) {
                         this.todos.push({
-                            id: id++,
+                            id:todoStorage.uid++,
                             title: this.newTodoTitle,
                             completed: false
                         });
@@ -135,7 +159,9 @@
                     }
                 }
             }
-        })
+        });
+       
+        
 
     </script>
 </body>
