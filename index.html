@@ -16,13 +16,10 @@
         </div>
         <!-- todo list -->
         <ul>
-            <li v-for="todo in filteredTodos" :key="todo.index">
-                <span :class="{completed:todo.completed}" @dblclick="editTodo(todo)">{{todo.title}}</span>
-                <input type="button" value="标为完成" @click="markAsCompleted(todo)">
-                <input type="button" value="删除" @click="removeTodo(todo)">
-                <input type="text" value="编辑 todo..." v-if="editedTodo!==null && editedTodo.id===todo.id" v-model="todo.title" @keyup.enter="editDone(todo)" @keyup.esc="cancelEdit(todo)" v-focus="true" />
-            </li>
-
+            <todo-item v-for="todo in filteredTodos"
+                       :todo="todo"
+                       :key="todo.id"
+                       @remove-todo="removeTodo"></todo-item>
         </ul>
         <!-- end todo list -->
         <div>
@@ -43,6 +40,14 @@
             </span>
         </div>
     </div>
+    <script type="text/x-template" id="todo-item">
+            <li>
+                <span :class="{completed:todo.completed}" @dblclick="editTodo(todo)">{{todo.title}}</span>
+                <input type="button" value="标为完成" @click="markAsCompleted(todo)">
+                <input type="button" value="删除" @click="removeTodo(todo)">
+                <input type="text" value="编辑 todo..." v-if="editing" v-model="todo.title" @keyup.enter="editDone(todo)" @keyup.esc="cancelEdit(todo)" v-focus="true" />
+            </li>
+    </script>
 
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <script>
@@ -62,6 +67,58 @@
             }
         }
         //storage finish
+        Vue.component('todo-item',{
+            template:'#todo-item',
+            data:function(){
+                return{
+                    editedTodo: null, //temperarily store todo before it is edited
+                }
+            },
+            props:{
+                todo:{
+                    type:Object,
+                    required:true,               
+                },
+            },
+            methods:{
+                markAsCompleted: function(todo) {
+                    todo.completed = true
+                },
+                removeTodo: function(todo) {
+                    this.$emit('remove-todo',todo)
+
+                    
+                },
+                editTodo: function(todo) {
+                    this.editedTodo = {
+                        id: todo.id,
+                        title: todo.title
+                    }
+                },
+                editDone: function(todo) {
+                    this.editedTodo = null;
+                    if (!this.todo) this.removeTodo(todo) //when todo is empty.remove it when user hit enter
+                },
+                cancelEdit: function(todo) {
+                    todo.title = this.editedTodo.title;
+                    this.editedTodo = null
+                },
+                
+            },
+            computed:{
+                editing:function(){
+                    return this.editedTodo!==null && this.editedTodo.id===this.todo.id
+                }
+            },
+            directives: {
+                focus: {
+                    inserted: function(el) {
+                        el.focus()
+                    }
+                }
+            }
+            
+        })
         let id = 0;
         var app = new Vue({
             el: '#todo-app',
@@ -69,7 +126,7 @@
                 return {
                     todos: todoStorage.fetch(),
                     newTodoTitle: '',
-                    editedTodo: null, //temperarily store todo before it is edited
+                    
                     intention: 'all',
                     selected:false
 
@@ -97,27 +154,10 @@
                     }
 
                 },
-                markAsCompleted: function(todo) {
-                    todo.completed = true
+                removeTodo:function(todo){
+                  this.todos.splice(this.todos.indexOf(todo), 1)
                 },
-                removeTodo: function(todo) {
-
-                    this.todos.splice(this.todos.indexOf(todo), 1)
-                },
-                editTodo: function(todo) {
-                    this.editedTodo = {
-                        id: todo.id,
-                        title: todo.title
-                    }
-                },
-                editDone: function(todo) {
-                    this.editedTodo = null;
-                    if (!this.todo) this.removeTodo(todo) //when todo is empty.remove it when user hit enter
-                },
-                cancelEdit: function(todo) {
-                    todo.title = this.editedTodo.title;
-                    this.editedTodo = null
-                },
+                
                 markAllAsCompleted: function() {
                     this.todos.map(function(todo) {
                         if (!todo.completed) {
@@ -152,16 +192,9 @@
                 }
 
             },
-            directives: {
-                focus: {
-                    inserted: function(el) {
-                        el.focus()
-                    }
-                }
-            }
+            
         });
        
-        
 
     </script>
 </body>
